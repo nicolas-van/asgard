@@ -27,10 +27,11 @@ import flask
 COOKIE_DURATION = 3 * 7 * 34 * 60 * 60 # 3 weeks
 
 class WebApp(flask.Flask):
-    def __init__(self, app, *args, **kwargs):
+    def __init__(self, app, import_name, **kwargs):
         self.app = app
         self.sjoh = sjoh.flask.SjohFlask(self)
-        super(WebApp, self).__init__(*args, **kwargs)
+
+        super(WebApp, self).__init__(import_name, **kwargs)
 
     def full_dispatch_request(self, *args, **kw):
         with self.app:

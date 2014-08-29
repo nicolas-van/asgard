@@ -34,6 +34,9 @@ class Asgard(object):
         Creates an Asgard application.
         """
 
+        self.configuration = {}
+        self.import_name = import_name
+
         """
         The engine used to connect to the database.
         """
@@ -54,14 +57,16 @@ class Asgard(object):
         self.session = werkzeug.local.LocalProxy(lambda: self.session_handler.current)
 
         flask_parameters = flask_parameters or {}
-        self.web_app = web.WebApp(self, import_name, **flask_parameters)
+        self.web_app = web.WebApp(self, self.import_name, **flask_parameters)
 
     @property
     def conn(self):
         return self.connection
 
-    def configure_engine(self, configuration):
-        self.engine = sa.engine_from_config(configuration)
+    def configure(self, configuration):
+        self.configuration = configuration
+        self.engine = sa.engine_from_config(self.configuration.setdefault("database", {}))
+        self.web_app.config.update(**self.configuration.setdefault("web", {}))
 
     @contextlib.contextmanager
     def transaction(self):
