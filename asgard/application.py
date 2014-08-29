@@ -68,6 +68,9 @@ class Asgard(object):
         self.engine = sa.engine_from_config(self.config.setdefault("database", {}))
         self.web_app.config.update(**self.config.setdefault("web", {}))
 
+    def create_tables(self):
+        self.metadata.create_all(self.engine)
+
     @contextlib.contextmanager
     def transaction(self):
         """
