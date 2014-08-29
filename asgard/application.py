@@ -24,10 +24,12 @@ from __future__ import unicode_literals, print_function, absolute_import
 import werkzeug.local
 import sqlalchemy as sa
 import contextlib
+from . import sessions
+from . import web
 
 class Asgard(object):
 
-    def __init__(self):
+    def __init__(self, import_name, flask_parameters=None):
         """
         Creates an Asgard application.
         """
@@ -46,6 +48,13 @@ class Asgard(object):
         The metadata object containing all the information about the db schema.
         """
         self.metadata = sa.MetaData()
+
+        self.sessions_table = sessions.create_sessions_table(self.metadata)
+        self.session_handler = sessions.SessionHandler(self)
+        self.session = werkzeug.local.LocalProxy(lambda: self.session_handler.current)
+
+        flask_parameters = flask_parameters or {}
+        self.web_app = web.WebApp(self, import_name, **flask_parameters)
 
     @property
     def conn(self):
@@ -108,6 +117,9 @@ class Asgard(object):
     def __exit__(self, *args, **kwargs):
         _app_stack.pop()
 
+    def declare_session(self, sid):
+        return self.session_handler.declare_session(sid)
+
 _app_stack = werkzeug.local.LocalStack()
 """
 A proxy to the current Asgard application.
@@ -117,3 +129,4 @@ app = _app_stack()
 engine = werkzeug.local.LocalProxy(lambda: app.engine)
 conn = werkzeug.local.LocalProxy(lambda: app.connection)
 connection = werkzeug.local.LocalProxy(lambda: app.connection)
+session = werkzeug.local.LocalProxy(lambda: app.session)
