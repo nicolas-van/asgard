@@ -36,7 +36,7 @@ setup(name='asgard',
       scripts=[],
       long_description="",
       keywords="",
-      license="LGPL",
+      license="MIT",
       classifiers=[
           ],
       install_requires=[
