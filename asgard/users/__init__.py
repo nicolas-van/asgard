@@ -36,6 +36,7 @@ class UsersPlugin(object):
             sa.Column('id', sa.Integer, primary_key=True),
             sa.Column('email', sa.String(50), nullable=True, unique=True),
             sa.Column('password_hash', sa.String(100), nullable=False),
+            sa.Column('creation_date', sa.DateTime(), nullable=False, default=datetime.datetime.now),
         )
 
         @app.manager
