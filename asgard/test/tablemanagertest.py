@@ -25,23 +25,28 @@ import unittest
 
 import asgard.table_manager as table_manager
 import sqlalchemy as sa
+import asgard.application as application
+
+app = application.Asgard()
 
 class DbTest(unittest.TestCase):
     """Class to extend to easily test code using the database."""
     def setUp(self):
-        self.tmp_engine = table_manager.engine
-        table_manager.engine = sa.create_engine('sqlite:///:memory:')
-        table_manager.metadata.create_all(table_manager.engine)
-        self.trans = table_manager.transaction()
+        self.tmp_engine = app.engine
+        app.engine = sa.create_engine('sqlite:///:memory:')
+        app.metadata.create_all(app.engine)
+        app.__enter__()
+        self.trans = app.transaction()
         self.trans.__enter__()
 
     def tearDown(self):
         self.trans.__exit__(None, None, None)
-        table_manager.engine.dispose()
-        table_manager.engine = self.tmp_engine
+        app.engine.dispose()
+        app.engine = self.tmp_engine
+        app.__exit__(None, None, None)
 
 
-test_table = sa.Table('test_table', table_manager.metadata,
+test_table = sa.Table('test_table', app.metadata,
    sa.Column('id', sa.Integer, primary_key=True),
    sa.Column('key', sa.String(50), unique=True),
    sa.Column('value', sa.String(50)),

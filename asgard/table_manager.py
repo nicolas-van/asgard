@@ -26,89 +26,11 @@ import sqlalchemy as sa
 import sqlalchemy.sql as sql
 import sqlalchemy.sql.expression
 import werkzeug.local
-import contextlib
 import collections
 from . import expression as expr
 import re
 import datetime
-
-"""
-The engine used to connect to the database.
-"""
-engine = None
-
-def configure(configuration):
-    global engine
-    engine = sa.engine_from_config(configuration)
-
-"""
-The metadata object containing all the information about the db schema.
-"""
-metadata = sa.MetaData()
-
-_conn_stack = werkzeug.local.LocalStack()
-
-"""
-A proxy to a connection object currently used to perform calls to the database.
-"""
-conn = _conn_stack()
-
-@contextlib.contextmanager
-def transaction():
-    """
-    A context manager that initializes a connection and store it in the ``conn`` proxy. When the operations
-    terminate normally, the transaction is commited. If there is an exception, the transaction is rollbacked.
-    """
-    assert _conn_stack.top is None, "Only one connection can be opened at the same time"
-    _conn_stack.push(engine.connect())
-    try:
-        conn.current_transaction = conn.begin()
-        try:
-            yield
-            conn.current_transaction.commit()
-        except:
-            conn.current_transaction.rollback()
-            raise
-    finally:
-        try:
-            conn.close()
-        except:
-            pass
-        _conn_stack.pop()
-
-def transactional(func):
-    """
-    A decorator that will call ``transaction`` before the invocation of the function.
-    """
-    def alt(*args, **kwargs):
-        with transaction():
-            return func(*args, **kwargs)
-    alt.__name__ = func.__name__
-    alt.__module__ = func.__module__
-    return alt
-
-"""
-An array where functions can be pushed to be called during the database initialization.
-Those functions are ensured to be called during a transaction.
-"""
-data_initializers = []
-
-class ManagersHandler(object):
-
-    def manager(self, claz):
-        """
-        A decorator to mark a class as a manager. Thus, a single instance of that class will be instanciated and
-        stored in the ``i`` attribute of the class and its methods will be accessible by RPC calls.
-
-        It should be noted that all methods declared in a manager should take in arguments and return only types
-        succeptible to be correctly serialized/deserialized by whatever RPC protocol will be used in front of
-        the managers.
-        """
-        instance = claz()
-        claz.i = instance
-        return claz
-
-app = ManagersHandler()
+from .application import conn
 
 class PersistenceException(Exception):
     pass
