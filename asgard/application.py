@@ -34,7 +34,7 @@ class Asgard(object):
         Creates an Asgard application.
         """
 
-        self.configuration = {}
+        self.config = {}
         self.import_name = import_name
 
         """
@@ -63,10 +63,10 @@ class Asgard(object):
     def conn(self):
         return self.connection
 
-    def configure(self, configuration):
-        self.configuration = configuration
-        self.engine = sa.engine_from_config(self.configuration.setdefault("database", {}))
-        self.web_app.config.update(**self.configuration.setdefault("web", {}))
+    def configure(self, config):
+        self.config = config
+        self.engine = sa.engine_from_config(self.config.setdefault("database", {}))
+        self.web_app.config.update(**self.config.setdefault("web", {}))
 
     @contextlib.contextmanager
     def transaction(self):
@@ -135,3 +135,4 @@ engine = werkzeug.local.LocalProxy(lambda: app.engine)
 conn = werkzeug.local.LocalProxy(lambda: app.connection)
 connection = werkzeug.local.LocalProxy(lambda: app.connection)
 session = werkzeug.local.LocalProxy(lambda: app.session)
+config = werkzeug.local.LocalProxy(lambda: app.config)

@@ -27,7 +27,7 @@ import asgard.tables as table_manager
 import sqlalchemy as sa
 import asgard.application as application
 
-app = application.Asgard()
+app = application.Asgard(__name__)
 
 class DbTest(unittest.TestCase):
     """Class to extend to easily test code using the database."""
