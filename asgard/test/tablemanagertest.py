@@ -23,7 +23,7 @@ from __future__ import unicode_literals, print_function, absolute_import
 
 import unittest
 
-import asgard.table_manager as table_manager
+import asgard.tables as table_manager
 import sqlalchemy as sa
 import asgard.application as application
 

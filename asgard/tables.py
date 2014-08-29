@@ -239,35 +239,3 @@ def table_manager(table):
         table = ttable
 
     return BindedTableManager
-
-class StateTableManager(TableManager):
-    def __init__(self, *args, **kwargs):
-        super(StateTableManager, self).__init__(*args, **kwargs)
-        table = self.table
-        assert hasattr(table.c, "state"), "Table %s must contain a field named state" % table
-        assert isinstance(table.c.state.type, sa.Enum), "Field state in table %s must be an enumeration" % table
-        assert table.c.state.nullable == False, "Field state in table %s must be non-nullable" % table
-        if hasattr(self.table.c, "last_state_change"):
-            assert isinstance(table.c.last_state_change.type, sa.DateTime), "Field last_state_change in table %s must be a datetime" % table
-            self._has_state_change = True
-        else:
-            self._has_state_change = False
-
-    def change_state_by_id(self, id, old_state, new_state, other_values=None):
-        return self.change_state_many_by_id([id], old_state, new_state, other_values)
-
-    def change_state_many_by_id(self, ids, old_state, new_state, other_values=None):
-        assert isinstance(ids, collections.Iterable), "Expected a list: %s" % ids
-        rowcount = self.change_state(self.table.c.id.in_(ids), old_state, new_state, other_values)
-        if rowcount != len(ids):
-            raise UnrecoverablePersistenceException("One or more ids where not found while updating table %s", self.table.name)
-
-    def change_state(self, expression, old_state, new_state, other_values=None):
-        other_values = other_values or {}
-        clause = sqlalchemy.sql.expression.and_(self._expression(expression), self.table.c.state == old_state)
-        values = {
-            "state": new_state,
-        }
-        if self._has_state_change:
-            values["last_state_change"] = datetime.datetime.now()
-        return self.update(clause, dict(other_values, **values))
