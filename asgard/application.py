@@ -70,7 +70,7 @@ class Asgard(object):
         self.configure_web(self.config.setdefault("web", {}))
 
     def configure_database(self, config):
-        config.set_default("sqlalchemy.url", 'sqlite://')
+        config.setdefault("sqlalchemy.url", 'sqlite://')
         self.engine = sa.engine_from_config(config)
 
     def configure_web(self, config):
