@@ -1,1 +1,4 @@
 *.pyc
+asgard.egg-info/
+build/
+dist/

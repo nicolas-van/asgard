@@ -26,13 +26,13 @@ from setuptools import setup
 import os.path
 
 setup(name='asgard',
-      version='0.1.0',
+      version='0.2.0',
       description='asgard',
       author='Nicolas Vanhoren',
       author_email='nicolas.vanhoren@unknown.com',
       url='http://nowhere.com',
-      py_modules = ['asgard'],
-      packages=[],
+      py_modules = [],
+      packages=["asgard"],
       scripts=[],
       long_description="",
       keywords="",

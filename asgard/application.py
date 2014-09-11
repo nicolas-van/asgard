@@ -64,9 +64,17 @@ class Asgard(object):
         return self.connection
 
     def configure(self, config):
+        config = config or {}
         self.config = config
-        self.engine = sa.engine_from_config(self.config.setdefault("database", {}))
-        self.web_app.config.update(**self.config.setdefault("web", {}))
+        self.configure_database(self.config.setdefault("database", {}))
+        self.configure_web(self.config.setdefault("web", {}))
+
+    def configure_database(self, config):
+        config.set_default("sqlalchemy.url", 'sqlite://')
+        self.engine = sa.engine_from_config(config)
+
+    def configure_web(self, config):
+        self.web_app.config.update(**config)
 
     def create_tables(self):
         self.metadata.create_all(self.engine)
