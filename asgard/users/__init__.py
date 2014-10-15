@@ -41,28 +41,42 @@ class UsersPlugin(object):
 
         @app.manager
         class UsersManager(asgard.table_manager(self.users)):
+            def __init__(self):
+                self._preferred_encryption = "bcrypt"
+
+            def _encode_password(self, password):
+                if self._preferred_encryption == "bcrypt":
+                    password = unicode(password).encode("utf8")
+                    phash = bcrypt.hashpw(password, bcrypt.gensalt(BCRYPT_TURNS))
+                    return "bcrypt:://" + phash
+                else:
+                    raise ValueError("unknown encryption")
+
+            def _check_password(self, password, to_compare):
+                found = re.match("^(\w+)\:\:\/\/(.*)$", to_compare)
+                if found.group(1) == "bcrypt":
+                    password = unicode(password).encode("utf8")
+                    phash = unicode(found.group(2)).encode("utf8")
+                    if bcrypt.hashpw(password, phash) == phash:
+                        return True
+                    else:
+                        return False
+                else:
+                    raise ValueError("unknown encryption")
+
             def create_user(self, email, password):
-                password = unicode(password).encode("utf8")
-                phash = bcrypt.hashpw(password, bcrypt.gensalt(BCRYPT_TURNS))
-                return self.create({"email": email, "password_hash": "bcrypt:://" + phash})
+                return self.create({"email": email, "password_hash": self._encode_password(password)})
 
             def set_password(self, user_id, password):
-                password = unicode(password).encode("utf8")
-                phash = bcrypt.hashpw(password, bcrypt.gensalt(BCRYPT_TURNS))
-                updated = self.update_by_id(user_id, {"password_hash": "bcrypt:://" + phash})
+                updated = self.update_by_id(user_id, {"password_hash": self._encode_password(password)})
                 return updated
 
             def test_user(self, email, password):
-                password = unicode(password).encode("utf8")
                 try:
                     user = self.read_by_email(email, ["password_hash"])
                 except asgard.PersistenceException:
                     return False
-                phash = re.match("^bcrypt\:\:\/\/(.*)$", user["password_hash"]).group(1)
-                phash = unicode(phash).encode("utf8")
-                if bcrypt.hashpw(password, phash) == phash:
-                    return True
-                return False
+                return self._check_password(password, user["password_hash"])
 
             def read_by_email(self, email, fields=None):
                 users = self.read(["email == :email", {"email": email}], fields)
