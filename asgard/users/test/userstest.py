@@ -35,6 +35,7 @@ app_users = users.UsersPlugin(app)
 class DbTest(unittest.TestCase):
     """Class to extend to easily test code using the database."""
     def setUp(self):
+        app_users.UsersManager.i.preferred_encryption = "werkzeug"
         self.tmp_engine = app.engine
         app.engine = sa.create_engine('sqlite:///:memory:')
         app.metadata.create_all(app.engine)
