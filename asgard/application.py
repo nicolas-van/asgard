@@ -22,6 +22,7 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
 import werkzeug.local
+import flask.helpers
 import sqlalchemy as sa
 import contextlib
 from . import sessions
@@ -36,6 +37,7 @@ class Asgard(object):
 
         self.config = {}
         self.import_name = import_name
+        self._root_path = flask.helpers.get_root_path(import_name)
 
         """
         The engine used to connect to the database.
@@ -62,12 +64,23 @@ class Asgard(object):
         self._plugins = []
 
     @property
+    def root_path(self):
+        return self._root_path
+
+    @root_path.setter
+    def root_path(self, value):
+        self._root_path = value
+        self.web_app.root_path = value
+
+    @property
     def conn(self):
         return self.connection
 
     def configure(self, config):
         config = config or {}
         self.config = config
+        if "root_path" in config:
+            self.root_path = config["root_path"]
         self.configure_database(self.config.setdefault("database", {}))
         self.configure_web(self.config.setdefault("web", {}))
         for plugin in self._plugins:
