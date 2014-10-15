@@ -26,7 +26,7 @@ from setuptools import setup
 import os.path
 
 setup(name='asgard',
-      version='0.3.0',
+      version='0.4.0',
       description='asgard',
       author='Nicolas Vanhoren',
       author_email='nicolas.vanhoren@unknown.com',
