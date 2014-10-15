@@ -40,13 +40,19 @@ setup(name='asgard',
       classifiers=[
           ],
       install_requires=[
+        'werkzeug>=0.9.6',
         'flask',
         'sqlalchemy',
         'pyparsing',
         'pylru',
-        'bcrypt',
         'python-dateutil',
         'sjoh',
         ],
+      extras_require=[
+        "bcrypt",
+      ],
+      tests_require=[
+        "bcrypt",
+      ],
      )
 

@@ -24,10 +24,9 @@ from __future__ import unicode_literals, print_function, absolute_import
 import sqlalchemy as sa
 import datetime
 import re
-import bcrypt
 import asgard
+import werkzeug.security
 
-BCRYPT_TURNS = 10
 
 class UsersPlugin(object):
     def __init__(self, app):
@@ -42,41 +41,53 @@ class UsersPlugin(object):
         @app.manager
         class UsersManager(asgard.table_manager(self.users)):
             def __init__(self):
-                self._preferred_encryption = "bcrypt"
+                self.preferred_encryption = "werkzeug"
+                self.bcrypt_turns = 10
+                self.werkzeug_method = "pbkdf2:sha1:10000"
 
             def _encode_password(self, password):
-                if self._preferred_encryption == "bcrypt":
-                    password = unicode(password).encode("utf8")
-                    phash = bcrypt.hashpw(password, bcrypt.gensalt(BCRYPT_TURNS))
+                password = unicode(password)
+                if self.preferred_encryption == "bcrypt":
+                    import bcrypt
+                    password = password.encode("utf8")
+                    phash = bcrypt.hashpw(password, bcrypt.gensalt(self.bcrypt_turns))
                     return "bcrypt:://" + phash
+                elif self.preferred_encryption == "werkzeug":
+                    return "werkzeug:://" + werkzeug.security.generate_password_hash(password, self.werkzeug_method)
                 else:
                     raise ValueError("unknown encryption")
 
             def _check_password(self, password, to_compare):
+                password = unicode(password)
                 found = re.match("^(\w+)\:\:\/\/(.*)$", to_compare)
                 if found.group(1) == "bcrypt":
-                    password = unicode(password).encode("utf8")
+                    import bcrypt
+                    password = password.encode("utf8")
                     phash = unicode(found.group(2)).encode("utf8")
                     if bcrypt.hashpw(password, phash) == phash:
                         return True
                     else:
                         return False
+                if found.group(1) == "werkzeug":
+                    return werkzeug.security.check_password_hash(found.group(2), password)
                 else:
                     raise ValueError("unknown encryption")
 
             def create_user(self, email, password):
-                return self.create({"email": email, "password_hash": self._encode_password(password)})
+                hash_ = self._encode_password(password)
+                return self.create({"email": email, "password_hash": hash_})
 
             def set_password(self, user_id, password):
-                updated = self.update_by_id(user_id, {"password_hash": self._encode_password(password)})
+                hash_ = self._encode_password(password)
+                updated = self.update_by_id(user_id, {"password_hash": hash_})
                 return updated
 
             def test_user(self, email, password):
                 try:
-                    user = self.read_by_email(email, ["password_hash"])
+                    hash_ = self.read_by_email(email, ["password_hash"])["password_hash"]
                 except asgard.PersistenceException:
                     return False
-                return self._check_password(password, user["password_hash"])
+                return self._check_password(password, hash_)
 
             def read_by_email(self, email, fields=None):
                 users = self.read(["email == :email", {"email": email}], fields)

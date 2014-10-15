@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright (c) 2014, Nicolas Vanhoren
 # 
 # Released under the MIT license
@@ -60,3 +62,38 @@ class UsersTest(DbTest):
         app_users.UsersManager.i.set_password(id, "xyz")
         self.assertTrue(app_users.UsersManager.i.test_user("test@test.com", "xyz"))
         self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "abc"))
+
+    def test_bcrypt_compatibility(self):
+        app_users.UsersManager.i.preferred_encryption = "bcrypt"
+        id = app_users.UsersManager.i.create_user("test@test.com", "abc")
+        hash_ = app_users.UsersManager.i.read_by_id(id, ["password_hash"])["password_hash"]
+        self.assertTrue(hash_.startswith("bcrypt"))
+        app_users.UsersManager.i.preferred_encryption = "werkzeug"
+        self.assertTrue(app_users.UsersManager.i.test_user("test@test.com", "abc"))
+        self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "xyz"))
+        app_users.UsersManager.i.set_password(id, "abc")
+        hash_ = app_users.UsersManager.i.read_by_id(id, ["password_hash"])["password_hash"]
+        self.assertTrue(hash_.startswith("werkzeug"))
+        self.assertTrue(app_users.UsersManager.i.test_user("test@test.com", "abc"))
+        self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "xyz"))
+
+    def test_unicode(self):
+        app_users.UsersManager.i.create_user("test@test.com", "abcéèçÔ")
+        self.assertTrue(app_users.UsersManager.i.test_user("test@test.com", "abcéèçÔ"))
+        self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "abcéèçÔx"))
+
+    def test_unicode_bcrypt(self):
+        app_users.UsersManager.i.preferred_encryption = "bcrypt"
+        app_users.UsersManager.i.create_user("test@test.com", "abcéèçÔ")
+        self.assertTrue(app_users.UsersManager.i.test_user("test@test.com", "abcéèçÔ"))
+        self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "abcéèçÔx"))
+
+    """
+    # not run consistently, just used to tune the turns for pbkdf2
+    def test_time(self):
+        import time
+        start = time.time()
+        app_users.UsersManager.i._encode_password("test")
+        end = time.time()
+        print(end - start)
+    """
