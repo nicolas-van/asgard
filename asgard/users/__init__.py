@@ -34,7 +34,7 @@ class UsersPlugin(object):
         self.users = sa.Table('users', app.metadata,
             sa.Column('id', sa.Integer, primary_key=True),
             sa.Column('email', sa.String(50), nullable=True, unique=True),
-            sa.Column('password_hash', sa.String(100), nullable=False),
+            sa.Column('password_hash', sa.String(200), nullable=False),
             sa.Column('creation_date', sa.DateTime(), nullable=False, default=datetime.datetime.now),
         )
 
@@ -43,7 +43,7 @@ class UsersPlugin(object):
             def __init__(self):
                 self.preferred_encryption = "werkzeug"
                 self.bcrypt_turns = 10
-                self.werkzeug_method = "pbkdf2:sha1:10000"
+                self.werkzeug_method = "pbkdf2:sha512:10000"
 
             def _encode_password(self, password):
                 password = unicode(password)

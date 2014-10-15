@@ -92,9 +92,10 @@ class UsersTest(DbTest):
     """
     # not run consistently, just used to tune the turns for pbkdf2
     def test_time(self):
+        hash_ = app_users.UsersManager.i._encode_password("test")
         import time
         start = time.time()
-        app_users.UsersManager.i._encode_password("test")
+        app_users.UsersManager.i._check_password("test", hash_)
         end = time.time()
         print(end - start)
     """
