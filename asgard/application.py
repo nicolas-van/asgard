@@ -156,7 +156,7 @@ class Asgard(object):
         self._plugins.append((plugin_class, p))
         return p
 
-def AsgardPlugin(object):
+class Plugin(object):
     
     config_key = None
     dependencies = []

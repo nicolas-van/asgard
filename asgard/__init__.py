@@ -21,5 +21,5 @@
 
 from __future__ import unicode_literals, print_function, absolute_import
 
-from .application import Asgard, app, engine, conn, connection, session, config
+from .application import Asgard, Plugin, app, engine, conn, connection, session, config
 from .tables import table_manager, PersistenceException, UnrecoverablePersistenceException

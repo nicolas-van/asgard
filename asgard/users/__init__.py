@@ -28,7 +28,7 @@ import asgard
 import werkzeug.security
 
 
-class UsersPlugin(object):
+class UsersPlugin(asgard.Plugin):
 
     config_key = "users"
     dependencies = []
