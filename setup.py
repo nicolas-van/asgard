@@ -49,9 +49,9 @@ setup(name='asgard',
         'sjoh',
         'mailflash==0.1.0',
         ],
-      extras_require=[
-        "bcrypt",
-      ],
+      extras_require={
+        "bcrypt": ["bcrypt"],
+      },
       tests_require=[
         "bcrypt",
       ],
