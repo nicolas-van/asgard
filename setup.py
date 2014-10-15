@@ -47,6 +47,7 @@ setup(name='asgard',
         'pylru',
         'python-dateutil',
         'sjoh',
+        'mailflash==0.1.0',
         ],
       extras_require=[
         "bcrypt",

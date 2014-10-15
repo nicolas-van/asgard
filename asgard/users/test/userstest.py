@@ -30,12 +30,12 @@ import asgard.users as users
 import sqlalchemy as sa
 
 app = application.Asgard(__name__)
-app_users = users.UsersPlugin(app)
+app_users = app.register_plugin(users.UsersPlugin)
 
 class DbTest(unittest.TestCase):
     """Class to extend to easily test code using the database."""
     def setUp(self):
-        app_users.UsersManager.i.preferred_encryption = "werkzeug"
+        app_users.config["preferred_encryption"] = "werkzeug"
         self.tmp_engine = app.engine
         app.engine = sa.create_engine('sqlite:///:memory:')
         app.metadata.create_all(app.engine)
@@ -65,11 +65,11 @@ class UsersTest(DbTest):
         self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "abc"))
 
     def test_bcrypt_compatibility(self):
-        app_users.UsersManager.i.preferred_encryption = "bcrypt"
+        app_users.config["preferred_encryption"] = "bcrypt"
         id = app_users.UsersManager.i.create_user("test@test.com", "abc")
         hash_ = app_users.UsersManager.i.read_by_id(id, ["password_hash"])["password_hash"]
         self.assertTrue(hash_.startswith("bcrypt"))
-        app_users.UsersManager.i.preferred_encryption = "werkzeug"
+        app_users.config["preferred_encryption"] = "werkzeug"
         self.assertTrue(app_users.UsersManager.i.test_user("test@test.com", "abc"))
         self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "xyz"))
         app_users.UsersManager.i.set_password(id, "abc")
@@ -84,7 +84,7 @@ class UsersTest(DbTest):
         self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "abcéèçÔx"))
 
     def test_unicode_bcrypt(self):
-        app_users.UsersManager.i.preferred_encryption = "bcrypt"
+        app_users.config["preferred_encryption"] = "bcrypt"
         app_users.UsersManager.i.create_user("test@test.com", "abcéèçÔ")
         self.assertTrue(app_users.UsersManager.i.test_user("test@test.com", "abcéèçÔ"))
         self.assertFalse(app_users.UsersManager.i.test_user("test@test.com", "abcéèçÔx"))

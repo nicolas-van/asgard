@@ -29,8 +29,18 @@ import werkzeug.security
 
 
 class UsersPlugin(object):
+
+    config_key = "users"
+    dependencies = []
+
     def __init__(self, app):
+        plugin = self
         self.app = app
+        self.config = {
+            "preferred_encryption" : "werkzeug",
+            "bcrypt_turns" : 10,
+            "werkzeug_method" : "pbkdf2:sha512:10000",
+        }
         self.users = sa.Table('users', app.metadata,
             sa.Column('id', sa.Integer, primary_key=True),
             sa.Column('email', sa.String(50), nullable=True, unique=True),
@@ -40,20 +50,16 @@ class UsersPlugin(object):
 
         @app.manager
         class UsersManager(asgard.table_manager(self.users)):
-            def __init__(self):
-                self.preferred_encryption = "werkzeug"
-                self.bcrypt_turns = 10
-                self.werkzeug_method = "pbkdf2:sha512:10000"
 
             def _encode_password(self, password):
                 password = unicode(password)
-                if self.preferred_encryption == "bcrypt":
+                if plugin.config["preferred_encryption"] == "bcrypt":
                     import bcrypt
                     password = password.encode("utf8")
-                    phash = bcrypt.hashpw(password, bcrypt.gensalt(self.bcrypt_turns))
+                    phash = bcrypt.hashpw(password, bcrypt.gensalt(plugin.config["bcrypt_turns"]))
                     return "bcrypt:://" + phash
-                elif self.preferred_encryption == "werkzeug":
-                    return "werkzeug:://" + werkzeug.security.generate_password_hash(password, self.werkzeug_method)
+                elif plugin.config["preferred_encryption"] == "werkzeug":
+                    return "werkzeug:://" + werkzeug.security.generate_password_hash(password, plugin.config["werkzeug_method"])
                 else:
                     raise ValueError("unknown encryption")
 
@@ -96,3 +102,6 @@ class UsersPlugin(object):
                 return users[0]
 
         self.UsersManager = UsersManager
+
+    def configure(self, config):
+        self.config.update(config)

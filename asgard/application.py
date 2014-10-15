@@ -59,6 +59,8 @@ class Asgard(object):
         flask_parameters = flask_parameters or {}
         self.web_app = web.WebApp(self, self.import_name, **flask_parameters)
 
+        self._plugins = []
+
     @property
     def conn(self):
         return self.connection
@@ -68,6 +70,8 @@ class Asgard(object):
         self.config = config
         self.configure_database(self.config.setdefault("database", {}))
         self.configure_web(self.config.setdefault("web", {}))
+        for plugin in self._plugins:
+            plugin[1].configure(config.setdefault(plugin[0].config_key, {}))
 
     def configure_database(self, config):
         config.setdefault("sqlalchemy.url", 'sqlite://')
@@ -133,8 +137,35 @@ class Asgard(object):
     def __exit__(self, *args, **kwargs):
         _app_stack.pop()
 
-    def declare_session(self, sid):
+    def declare_session(self, sid=None):
         return self.session_handler.declare_session(sid)
+
+    def plugin(self, plugin_class):
+        found = None
+        for p in self._plugins:
+            if p[0] == plugin_class:
+                return p[1]
+        return None
+
+    def register_plugin(self, plugin_class):
+        if self.plugin(plugin_class) is not None:
+            return self.plugin(plugin_class)
+        for dep in plugin_class.dependencies:
+            self.register_plugin(dep)
+        p = plugin_class(self)
+        self._plugins.append((plugin_class, p))
+        return p
+
+def AsgardPlugin(object):
+    
+    config_key = None
+    dependencies = []
+
+    def __init__(self, app):
+        pass
+
+    def configure(self, config):
+        pass
 
 _app_stack = werkzeug.local.LocalStack()
 """
