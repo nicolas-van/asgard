@@ -52,7 +52,7 @@ class MailsPlugin(asgard.Plugin):
 
     def build_message(self,
                 template,
-                template_params,
+                template_params=None,
                 subject=None,
                 recipients=None,
                 sender=None,
@@ -84,6 +84,7 @@ class MailsPlugin(asgard.Plugin):
         :param mail_options: A list of ESMTP options to be used in MAIL FROM command
         :param rcpt_options:  A list of ESMTP options to be used in RCPT commands
         """
+        template_params = template_params or {}
         rendered = self.jinja_env.get_template(template).render(**template_params)
         return mailflash.Message(subject, recipients, None, rendered, sender, cc, bcc, attachments,
             reply_to, date, charset, extra_headers, mail_options, rcpt_options)
