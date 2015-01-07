@@ -27,6 +27,10 @@ import re
 import asgard
 import werkzeug.security
 
+WERKZEUG_METHOD = "pbkdf2:sha512:10000"
+
+def encode_werkzeug(password, method=WERKZEUG_METHOD):
+    return "werkzeug:://" + werkzeug.security.generate_password_hash(password, method)
 
 class UsersPlugin(asgard.Plugin):
 
@@ -39,7 +43,7 @@ class UsersPlugin(asgard.Plugin):
         self.config = {
             "preferred_encryption" : "werkzeug",
             "bcrypt_turns" : 10,
-            "werkzeug_method" : "pbkdf2:sha512:10000",
+            "werkzeug_method" : WERKZEUG_METHOD,
         }
         self.users = sa.Table('users', app.metadata,
             sa.Column('id', sa.Integer, primary_key=True),
@@ -59,7 +63,7 @@ class UsersPlugin(asgard.Plugin):
                     phash = bcrypt.hashpw(password, bcrypt.gensalt(plugin.config["bcrypt_turns"]))
                     return "bcrypt:://" + phash
                 elif plugin.config["preferred_encryption"] == "werkzeug":
-                    return "werkzeug:://" + werkzeug.security.generate_password_hash(password, plugin.config["werkzeug_method"])
+                    return encode_werkzeug(password, plugin.config["werkzeug_method"])
                 else:
                     raise ValueError("unknown encryption")
 
